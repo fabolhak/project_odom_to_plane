@@ -1,7 +1,9 @@
 #include "ros/ros.h"
 #include "nav_msgs/Odometry.h"
 #include "tf/tf.h"
-#include <tf/transform_broadcaster.h>
+#include "tf/transform_broadcaster.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "convert_zed_odom/tf2_geometry_msgs.h"
 
 static std::string moving_frame, static_frame;
 
@@ -13,24 +15,44 @@ tf::TransformBroadcaster* tf_broad;
 
 void odoCallback(const nav_msgs::OdometryConstPtr &msg)
 {
-  nav_msgs::Odometry new_msg = *msg;
+  // get roll and pitch of odometry in
+  double roll, pitch, yaw;
+  tf::Quaternion q;
+  tf::quaternionMsgToTF(msg->pose.pose.orientation, q);
+  tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
+  /*
+   * calculate transfrom to correct odometry
+   * - rotate around negativ roll and pitch angle (so that they become zero)
+   * - move along z axis (so that the z value becomes zero)
+   */
+
+  // transfrom negative roll and pitch angle to body coordinate system
+  tf::Vector3 rpy_transformed = tf::Matrix3x3(q) * tf::Vector3(-roll, -pitch, 0);
+  tf::Quaternion q1;
+  q1.setRPY(rpy_transformed.x(), rpy_transformed.y(), rpy_transformed.z());
+
+  // transform position to corrected coordinate system
+  tf::Vector3 t_transformed =  tf::Matrix3x3(q1) * tf::Vector3(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
+  t_transformed = tf::Vector3(0,0, -t_transformed.z());
+
+  // create transform
+  geometry_msgs::TransformStamped t;
+  t.transform.translation.x = t_transformed.x();
+  t.transform.translation.y = t_transformed.y();
+  t.transform.translation.z = t_transformed.z();
+  tf::quaternionTFToMsg(q1, t.transform.rotation);
+
+  // do the transform
+  nav_msgs::Odometry new_msg;
+  tf2::doTransform(msg->pose.pose, new_msg.pose.pose, t);
+
+  // set correct frames
   new_msg.header.frame_id = static_frame;
   new_msg.child_frame_id = moving_frame;
 
-  // manually set z to zero
-  new_msg.pose.pose.position.z = 0;
-  new_msg.twist.twist.linear.z = 0;
-
-  // manually set roll and pitch to zero
-  double roll, pitch, yaw;
-  tf::Quaternion q;
-  tf::quaternionMsgToTF(new_msg.pose.pose.orientation, q);
-  tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
-  q.setRPY(0, 0, yaw);
-  tf::quaternionTFToMsg(q, new_msg.pose.pose.orientation);
-  new_msg.twist.twist.angular.x = 0;
-  new_msg.twist.twist.angular.y = 0;
+  // set time
+  new_msg.header.stamp = msg->header.stamp;
 
   // publish
   odo_pub.publish(new_msg);
@@ -45,7 +67,9 @@ void odoCallback(const nav_msgs::OdometryConstPtr &msg)
   tf_data.setOrigin( tf::Vector3(new_msg.pose.pose.position.x,
                                  new_msg.pose.pose.position.y,
                                  new_msg.pose.pose.position.z) );
-  tf_data.setRotation(q);
+  tf::Quaternion q3;
+  tf::quaternionMsgToTF(new_msg.pose.pose.orientation, q3);
+  tf_data.setRotation(q3);
   tf.setData(tf_data);
   tf_broad->sendTransform(tf);
 }
