@@ -3,7 +3,7 @@
 #include "tf/tf.h"
 #include "tf/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "convert_zed_odom/tf2_geometry_msgs.h"
+#include "project_odom_to_plane/tf2_geometry_msgs.h"
 
 static std::string moving_frame, static_frame;
 
@@ -78,7 +78,7 @@ void odoCallback(const nav_msgs::OdometryConstPtr &msg)
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "convert_zed_odom");
+  ros::init(argc, argv, "project_odom_to_plane");
   ros::NodeHandle nh;
   ros::NodeHandle pnh("~");
 

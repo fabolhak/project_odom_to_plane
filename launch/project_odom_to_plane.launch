@@ -1,6 +1,6 @@
 <launch>
 
-    <arg name="zed_odom_topic" default=""/>
+    <arg name="inp_odom_topic" default=""/>
     <arg name="out_odom_topic" default=""/>
 
     <arg name="static_frame" default="" />
@@ -8,8 +8,8 @@
 
     <arg name="output" default="log" />
 
-    <node name="convert_zed_odom" pkg="convert_zed_odom" type="convert_zed_odom_node" output="$(arg output)" >
-      <remap from="~/odom_in" to="$(arg zed_odom_topic)"/>
+    <node name="project_odom_to_plane" pkg="project_odom_to_plane" type="project_odom_to_plane_node" output="$(arg output)" >
+      <remap from="~/odom_in" to="$(arg inp_odom_topic)"/>
       <remap from="~/odom_out" to="$(arg out_odom_topic)"/>
       <param name="static_frame" type="str" value="$(arg static_frame)" />
       <param name="moving_frame" type="str" value="$(arg moving_frame)" />
