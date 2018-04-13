@@ -45,7 +45,7 @@ void odoCallback(const nav_msgs::OdometryConstPtr &msg)
 
   // do the transform
   nav_msgs::Odometry new_msg;
-  tf2::doTransform(msg->pose.pose, new_msg.pose.pose, t);
+  tf2::doTransform(msg->pose, new_msg.pose, t);
 
   // set correct frames
   new_msg.header.frame_id = static_frame;

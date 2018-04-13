@@ -177,6 +177,31 @@ void doTransform(const geometry_msgs::PoseWithCovarianceStamped& t_in, geometry_
   t_out.pose.covariance = transformCovariance(t_in.pose.covariance, t);
 }
 
+
+/** \brief Apply a geometry_msgs Transform to an geometry_msgs PoseWithCovariance type.
+* This function is a specialization of the doTransform template defined in tf2/convert.h.
+* \param t_in The pose to transform, as a PoseWithCovariance message.
+* \param t_out The transformed pose, as a PoseWithCovariance message.
+* \param transform The transform to apply, as a Transform message.
+*/
+template <>
+inline
+void doTransform(const geometry_msgs::PoseWithCovariance& t_in, geometry_msgs::PoseWithCovariance& t_out, const geometry_msgs::TransformStamped& transform)
+{
+  tf2::Vector3 v;
+  fromMsg(t_in.pose.position, v);
+  tf2::Quaternion r;
+  fromMsg(t_in.pose.orientation, r);
+
+  tf2::Transform t;
+  fromMsg(transform.transform, t);
+  tf2::Transform v_out = t * tf2::Transform(r, v);
+  toMsg(v_out, t_out.pose);
+
+  t_out.covariance = transformCovariance(t_in.covariance, t);
+}
+
+
 } // namespace
 
 #endif // TF2_GEOMETRY_MSGS_H_2
