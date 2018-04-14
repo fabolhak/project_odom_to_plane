@@ -1,5 +1,8 @@
 <launch>
 
+    <!-- vehicle name e.g. cc2017_car -->
+    <arg name="vehicle" default="cc2017_car"/>
+
     <arg name="inp_odom_topic" default=""/>
     <arg name="out_odom_topic" default=""/>
 
@@ -8,11 +11,19 @@
 
     <arg name="output" default="log" />
 
+
+    <!-- ignore incoming covariances and use static covariances instead -->
+    <arg name="use_static_cov" default="false" />
+    <arg name="config_file" default="$(find project_odom_to_plane)/config/$(arg vehicle).yaml" />
+
+
     <node name="project_odom_to_plane" pkg="project_odom_to_plane" type="project_odom_to_plane_node" output="$(arg output)" >
       <remap from="~/odom_in" to="$(arg inp_odom_topic)"/>
       <remap from="~/odom_out" to="$(arg out_odom_topic)"/>
       <param name="static_frame" type="str" value="$(arg static_frame)" />
       <param name="moving_frame" type="str" value="$(arg moving_frame)" />
+      <param name="use_static_cov" type="bool" value="$(arg use_static_cov)" />
+      <rosparam command="load" file="$(arg config_file)"/>
     </node>
 
 </launch>
