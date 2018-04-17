@@ -13,9 +13,6 @@ ros::Subscriber odo_sub;
 
 tf::TransformBroadcaster* tf_broad;
 
-static bool use_static_cov = false;
-static std::vector<double> static_cov;
-
 
 void odoCallback(const nav_msgs::OdometryConstPtr &msg)
 {
@@ -58,12 +55,6 @@ void odoCallback(const nav_msgs::OdometryConstPtr &msg)
   // set time
   new_msg.header.stamp = msg->header.stamp;
 
-  // check wheater to use static covariances
-  if(use_static_cov)
-  {
-    std::copy(static_cov.begin(), static_cov.end(), new_msg.pose.covariance.data());
-  }
-
   // publish
   odo_pub.publish(new_msg);
 
@@ -100,18 +91,6 @@ int main(int argc, char **argv)
   tf_broad = new tf::TransformBroadcaster;
   odo_pub = pnh.advertise<nav_msgs::Odometry>("odom_out", 10);
   odo_sub = pnh.subscribe("odom_in", 10, odoCallback);
-
-  // get static covariances
-  use_static_cov = pnh.param<bool>("use_static_cov", false);
-  if(use_static_cov)
-  {
-    if(!pnh.getParam("cov/static_pose_cov", static_cov))
-    {
-     ROS_ERROR_STREAM("Failed to load static covariances from file! Aborting");
-     return 1;
-    }
-    ROS_INFO_STREAM("Use static covariances.");
-  }
 
 
   // forever loop
