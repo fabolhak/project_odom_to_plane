@@ -11,7 +11,8 @@
 
     <arg name="output" default="log" />
 
-    <node name="project_odom_to_plane" pkg="project_odom_to_plane" type="project_odom_to_plane_node" output="$(arg output)" >
+    <node name="project_odom_to_plane_$(arg moving_frame)" pkg="project_odom_to_plane"
+          type="project_odom_to_plane_node" output="$(arg output)" >
       <remap from="~/odom_in" to="$(arg inp_odom_topic)"/>
       <remap from="~/odom_out" to="$(arg out_odom_topic)"/>
       <param name="static_frame" type="str" value="$(arg static_frame)" />
